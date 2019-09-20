@@ -1,10 +1,9 @@
-import {getRepository} from "typeorm";
+import {getRepository, MoreThan, LessThan, MoreThanOrEqual} from "typeorm";
 import {NextFunction, Request, Response} from "express";
 import {ToDo} from "../entity/ToDo";
 import { ClientResponse } from "http";
 
     var date = new Date();
-    var dateJson = date.toJSON();
     
 
 export class ToDoController {
@@ -17,15 +16,33 @@ export class ToDoController {
 
     async filterByCategory(request: Request, response: Response, next: NextFunction) {
         console.log(request.params.category)
-        return this.toDoRepository.find(request.params.category);
+        return this.toDoRepository.find({
+            category: request.params.category
+        });
     }
 
     async filterByCompleteStatus(request: Request, response: Response, next: NextFunction) {
-        return this.toDoRepository.find(request.params.completed);
+        return this.toDoRepository.find({
+            completed: request.params.completed
+        });
     }
 
     async filterByTaskToday(request: Request, response: Response, next: NextFunction) {
-        return this.toDoRepository.find();
+        let todayDate = new Date()
+        todayDate.setHours(0)
+        todayDate.setMinutes(0)
+        todayDate.setSeconds(0)
+        todayDate.setMilliseconds(0)
+        // let nextDate = todayDate
+        // nextDate.setDate(nextDate.getDate() + 1)
+        // console.log(todayDate)
+        // console.log(nextDate)
+        return this.toDoRepository.find({
+            where: {
+                created_at: MoreThanOrEqual(todayDate)
+            // date.getDate()
+            }
+        });
     }
 
     async addTask(request: Request, response: Response, next: NextFunction){
@@ -46,7 +63,7 @@ export class ToDoController {
     async updateTaskStatus(request: Request, response: Response, next: NextFunction){
         let ToDo = await this.toDoRepository.findOne(request.params.taskId)
         ToDo.completed = request.body.completed,
-        ToDo.completed_at = dateJson
+        ToDo.completed_at = new Date()
         return this.toDoRepository.save(ToDo)
         
     }
